@@ -1,0 +1,12 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+
+#IntelliJ files
+*.iml
+*.ipr
+*.iws
+*.idea
+
+#Mac Files
+.DS_Store
