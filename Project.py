@@ -67,10 +67,9 @@ def clean_data(input_data):
     return matches_map
 
 def generate_donor_pool(matches_map,donor_pool_size):
-    donor_pool = [[] for i in range(2)]
+    donor_pool = []
     count=0
     for match_id in matches_map:
-
         if(count==donor_pool_size):
             break
         count+=1
@@ -86,8 +85,7 @@ def generate_donor_pool(matches_map,donor_pool_size):
             for i in range(len(donor_pool_runs_row),50,1):
                 donor_pool_runs_row.append(-1)
                 donor_pool_wickets_row.append(-1)
-            donor_pool[0].append(donor_pool_runs_row)
-            donor_pool[1].append(donor_pool_wickets_row)
+            donor_pool.append(donor_pool_runs_row+donor_pool_wickets_row)
 
     return donor_pool
 
@@ -104,7 +102,7 @@ if __name__ == '__main__':
     #Step1: Concatenation
     print('-----GENERATING DONOR POOL-----')
     donor_pool = generate_donor_pool(matches_map,donor_pool_size)
-    print('DONOR POOL SIZE: ',len(donor_pool[0]))
+    print('DONOR POOL SIZE: ',len(donor_pool))
     print('-----DONOR POOL GENERATED!!-----')
 
     #Step2: Denoising
