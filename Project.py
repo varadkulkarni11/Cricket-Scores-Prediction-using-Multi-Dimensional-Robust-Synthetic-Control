@@ -7,6 +7,7 @@ from numpy import arange
 from scipy.optimize import curve_fit,leastsq
 from collections import defaultdict
 from matplotlib import pyplot
+from scipy.linalg import svd
 
 
 donor_pool_size = 750
@@ -82,14 +83,17 @@ def generate_donor_pool(matches_map,donor_pool_size):
                     donor_pool_runs_row.append(runs[i])
                     donor_pool_wickets_row.append(10-wickets_left)
 
-            for i in range(len(donor_pool_runs_row),50,1):
-                donor_pool_runs_row.append(-1)
-                donor_pool_wickets_row.append(-1)
+            n = len(donor_pool_runs_row)
+            for i in range(n,50,1):
+                donor_pool_runs_row.append(donor_pool_runs_row[n-1])
+                donor_pool_wickets_row.append(donor_pool_wickets_row[n-1])
             donor_pool.append(donor_pool_runs_row+donor_pool_wickets_row)
 
     return donor_pool
 
 def denoise_donor_pool(donor_pool):
+    U,S,VT = svd(donor_pool)
+    print(len(U),len(S),len(VT))
     #TODO
     return 0
 
