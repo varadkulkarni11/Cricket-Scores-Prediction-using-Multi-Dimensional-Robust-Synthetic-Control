@@ -158,9 +158,6 @@ def predict_scores(denoised_donor_pool, treatment_unit):
     popt1,_ = curve_fit(objective, transpose(inputs_runs), runs_label,maxfev=1000000)
     popt2,_ = curve_fit(objective, transpose(input_wickets), wickets_label,maxfev=1000000)
 
-    print(popt1,popt2)
-    print(len(test_input_runs))
-    print(len(test_input_wickets))
     final_treatment_unit_runs=treatment_unit[0:30]
     final_treatment_unit_wickets=treatment_unit[30:60]
     for i in range(len(test_input_runs)):
