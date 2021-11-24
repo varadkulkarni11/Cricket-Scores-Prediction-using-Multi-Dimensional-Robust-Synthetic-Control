@@ -97,13 +97,11 @@ def generate_donor_pool_and_treatment_units(matches_map, donor_pool_size):
                     overs,runs = filter_data(wickets_left,matches_map,str(innings),match_id)
 
                     for i in range(len(overs)):
-                        if (len(treatment_units_runs_row) >=T0):
-                            break
                         treatment_units_runs_row.append(runs[i])
                         treatment_units_wickets_row.append(10-wickets_left)
 
                 n = len(treatment_units_runs_row)
-                for i in range(n,T0,1):
+                for i in range(n,50,1):
                     treatment_units_runs_row.append(treatment_units_runs_row[n-1])
                     treatment_units_wickets_row.append(treatment_units_wickets_row[n-1])
                 treatment_units.append(treatment_units_runs_row+treatment_units_wickets_row)
@@ -130,8 +128,8 @@ def predict_scores(denoised_donor_pool, treatment_unit):
 
     ###INITIAL VERSION WITH JUST ONE SINGLE WEIGHT PARAMETER
 
-    runs_label=treatment_unit[0:30]
-    wickets_label=treatment_unit[30:60]
+    runs_label=treatment_unit[0:T0]
+    wickets_label=treatment_unit[50:50+T0]
     inputs_runs=[]
     input_wickets=[]
 
@@ -161,11 +159,17 @@ def predict_scores(denoised_donor_pool, treatment_unit):
     final_treatment_unit_runs=treatment_unit[0:30]
     final_treatment_unit_wickets=treatment_unit[30:60]
     for i in range(len(test_input_runs)):
-        final_treatment_unit_runs.append(objective(test_input_runs[i],popt1)[0])
-        final_treatment_unit_wickets.append(objective(test_input_wickets[i],popt2)[0])
+        final_treatment_unit_runs.append(math.floor(objective(test_input_runs[i],popt1)[0]))
+        final_treatment_unit_wickets.append(math.floor(objective(test_input_wickets[i],popt2)[0]))
 
-    print(final_treatment_unit_runs)
-    print(final_treatment_unit_wickets)
+    print('PREDICTED RUNS: ')
+    print(final_treatment_unit_runs[30:50])
+    print('ACTUAL RUNS:' )
+    print(treatment_unit[30:50])
+    print('PREDICTED Wickets: ')
+    print(final_treatment_unit_wickets[30:50])
+    print('ACTUAL WICKETS:' )
+    print(treatment_unit[80:100])
 
     #TODO
     return 0
@@ -187,10 +191,11 @@ if __name__ == '__main__':
 
     #Step3: Linear Regression AND Prediction
     print('-----STARTING LINEAR REGRESSION AND PREDICTION-----')
-    for treatment_unit in treatment_units:
-        predicted_scores = predict_scores(denoised_donor_pool, treatment_unit)
+    N=len(treatment_units)
+    N=2
+    for i  in range(N):
+        predicted_scores = predict_scores(denoised_donor_pool, treatment_units[i])
         ####UNCOMMENT
-        break
     print('-----LINEAR REGRESSION AND PREDICTION DONE!!-----')
 
 
