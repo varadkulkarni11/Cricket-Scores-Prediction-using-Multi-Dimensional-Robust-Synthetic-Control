@@ -241,12 +241,3 @@ if __name__ == '__main__':
         post_process_prediction(actual_innings,predicted_innings)
 
     print('-----LINEAR REGRESSION AND PREDICTION DONE!!-----')
-
-
-
-
-
-
-
-
-
