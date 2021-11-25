@@ -135,8 +135,8 @@ def error_func(weights,x,y):
     return (objective(weights,x)-y)**2
 
 def predict_scores(denoised_donor_pool, treatment_unit):
-
-    ###INITIAL VERSION WITH JUST ONE SINGLE WEIGHT PARAMETER
+    actual_innings=[]
+    predicted_innings=[]
 
     runs_label=treatment_unit[0:T0]
     wickets_label=treatment_unit[50:50+T0]
@@ -169,19 +169,21 @@ def predict_scores(denoised_donor_pool, treatment_unit):
     final_weights_wickets = fit_data(input_wickets, wickets_label)
     print(final_weights_wickets[0:10])
 
-    # popt1,_ = curve_fit(objective, transpose(inputs_runs), runs_label,maxfev=1000000)
-    # popt2,_ = curve_fit(objective, transpose(input_wickets), wickets_label,maxfev=1000000)
-
-    final_treatment_unit_runs=treatment_unit[0:30]
-    final_treatment_unit_wickets=treatment_unit[30:60]
+    final_treatment_unit_runs=[]
+    final_treatment_unit_wickets=[]
+    for i in range(30):
+        final_treatment_unit_runs.append(math.floor(objective(inputs_runs[i],final_weights_runs)))
+        final_treatment_unit_wickets.append(math.floor(objective(input_wickets[i],final_weights_wickets)))
     for i in range(len(test_input_runs)):
         final_treatment_unit_runs.append(math.floor(objective(test_input_runs[i],final_weights_runs)))
         final_treatment_unit_wickets.append(math.floor(objective(test_input_wickets[i],final_weights_wickets)))
 
-    print_outputs(final_treatment_unit_runs, final_treatment_unit_wickets, treatment_unit)
+    actual_innings.append(treatment_unit[0:50])
+    actual_innings.append(treatment_unit[50:100])
+    predicted_innings.append(final_treatment_unit_runs)
+    predicted_innings.append(final_treatment_unit_wickets)
 
-    #TODO
-    return 0
+    return actual_innings,predicted_innings
 
 
 def print_outputs(final_treatment_unit_runs, final_treatment_unit_wickets, treatment_unit):
@@ -203,6 +205,8 @@ def fit_data(input_vectors, labels):
     final_weights = output.x
     return final_weights
 
+def post_process_prediction(actual_innings,predicted_innings):
+    return 0
 
 if __name__ == '__main__':
     matches_map = clean_data(input_data)
@@ -222,9 +226,20 @@ if __name__ == '__main__':
     #Step3: Linear Regression AND Prediction
     print('-----STARTING LINEAR REGRESSION AND PREDICTION-----')
     N=len(treatment_units)
-    N=1
+    N=2
     for i  in range(N):
-        predict_scores(denoised_donor_pool, treatment_units[i])
+        actual_innings,predicted_innings=predict_scores(denoised_donor_pool, treatment_units[i])
+        print('ACTUAL RUNS:')
+        print(actual_innings[0])
+        print('PREDICTED RUNS:')
+        print(predicted_innings[0])
+
+        print('ACTUAL WKTS:')
+        print(actual_innings[1])
+        print('PREDICTED WKTS:')
+        print(predicted_innings[1])
+
+        post_process_prediction(actual_innings,predicted_innings)
 
     print('-----LINEAR REGRESSION AND PREDICTION DONE!!-----')
 
