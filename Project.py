@@ -215,7 +215,6 @@ if __name__ == '__main__':
     donor_pool,treatment_units = generate_donor_pool_and_treatment_units(matches_map, donor_pool_size)
     print('DONOR POOL SIZE: ',len(donor_pool))
     print('TREATMENT UNITS SIZE: ',len(treatment_units))
-    print('LENGTH OF TREATMENT UNITS: ',len(treatment_units[0]))
     print('-----DONOR POOL AND TREATMENT UNITS GENERATED!!-----')
 
     #Step2: Denoising
