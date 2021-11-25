@@ -4,12 +4,13 @@ import re
 import pandas as pd
 import numpy as np
 from numpy import arange
-from scipy.optimize import curve_fit,leastsq
+from scipy.optimize import curve_fit,least_squares
 from collections import defaultdict
 from matplotlib import pyplot
 from scipy.linalg import svd
 
-
+n_iter=10
+init_guess=0.00001
 donor_pool_size = 750
 T0=30
 input_data = 'data/04_cricket_1999to2011.csv'
@@ -75,39 +76,48 @@ def generate_donor_pool_and_treatment_units(matches_map, donor_pool_size):
     for match_id in matches_map:
         count+=1
         if count<=donor_pool_size:
-            for innings in range(1,3,1):
-                donor_pool_runs_row=[]
-                donor_pool_wickets_row=[]
-                for wickets_left in range(10,-1,-1):
-                    overs,runs = filter_data(wickets_left,matches_map,str(innings),match_id)
-                    for i in range(len(overs)):
-                        donor_pool_runs_row.append(runs[i])
-                        donor_pool_wickets_row.append(10-wickets_left)
-
-                n = len(donor_pool_runs_row)
-                for i in range(n,50,1):
-                    donor_pool_runs_row.append(donor_pool_runs_row[n-1])
-                    donor_pool_wickets_row.append(donor_pool_wickets_row[n-1])
-                donor_pool.append(donor_pool_runs_row+donor_pool_wickets_row)
+             generate_donor_pool(donor_pool, match_id, matches_map)
         else:
-            for innings in range(1,3,1):
-                treatment_units_runs_row=[]
-                treatment_units_wickets_row=[]
-                for wickets_left in range(10,-1,-1):
-                    overs,runs = filter_data(wickets_left,matches_map,str(innings),match_id)
-
-                    for i in range(len(overs)):
-                        treatment_units_runs_row.append(runs[i])
-                        treatment_units_wickets_row.append(10-wickets_left)
-
-                n = len(treatment_units_runs_row)
-                for i in range(n,50,1):
-                    treatment_units_runs_row.append(treatment_units_runs_row[n-1])
-                    treatment_units_wickets_row.append(treatment_units_wickets_row[n-1])
-                treatment_units.append(treatment_units_runs_row+treatment_units_wickets_row)
+            generate_treatment_units(match_id, matches_map, treatment_units)
 
 
     return donor_pool,treatment_units
+
+
+def generate_treatment_units(match_id, matches_map, treatment_units):
+    for innings in range(1, 3, 1):
+        treatment_units_runs_row = []
+        treatment_units_wickets_row = []
+        for wickets_left in range(10, -1, -1):
+            overs, runs = filter_data(wickets_left, matches_map, str(innings), match_id)
+
+            for i in range(len(overs)):
+                treatment_units_runs_row.append(runs[i])
+                treatment_units_wickets_row.append(10 - wickets_left)
+
+        n = len(treatment_units_runs_row)
+        for i in range(n, 50, 1):
+            treatment_units_runs_row.append(treatment_units_runs_row[n - 1])
+            treatment_units_wickets_row.append(treatment_units_wickets_row[n - 1])
+        treatment_units.append(treatment_units_runs_row + treatment_units_wickets_row)
+
+
+def generate_donor_pool(donor_pool, match_id, matches_map):
+    for innings in range(1, 3, 1):
+        donor_pool_runs_row = []
+        donor_pool_wickets_row = []
+        for wickets_left in range(10, -1, -1):
+            overs, runs = filter_data(wickets_left, matches_map, str(innings), match_id)
+            for i in range(len(overs)):
+                donor_pool_runs_row.append(runs[i])
+                donor_pool_wickets_row.append(10 - wickets_left)
+
+        n = len(donor_pool_runs_row)
+        for i in range(n, 50, 1):
+            donor_pool_runs_row.append(donor_pool_runs_row[n - 1])
+            donor_pool_wickets_row.append(donor_pool_wickets_row[n - 1])
+        donor_pool.append(donor_pool_runs_row + donor_pool_wickets_row)
+
 
 def denoise_donor_pool(donor_pool):
     U,S,VT = svd(donor_pool)
@@ -115,14 +125,14 @@ def denoise_donor_pool(donor_pool):
     #TODO
     return donor_pool
 
-def objective(x,weights):
+def objective(weights,x):
     predicted_runs=0
     for i in range(len(x)):
-        predicted_runs+=x[i]*weights
+        predicted_runs+=x[i]*weights[i]
     return predicted_runs
 
-def transpose(matrix):
-    return tuple(zip(*matrix))
+def error_func(weights,x,y):
+    return (objective(weights,x)-y)**2
 
 def predict_scores(denoised_donor_pool, treatment_unit):
 
@@ -153,26 +163,46 @@ def predict_scores(denoised_donor_pool, treatment_unit):
             test_input_runs.append(predict_runs_feature_vector)
             test_input_wickets.append(predict_wickets_feature_vector)
 
-    popt1,_ = curve_fit(objective, transpose(inputs_runs), runs_label,maxfev=1000000)
-    popt2,_ = curve_fit(objective, transpose(input_wickets), wickets_label,maxfev=1000000)
+    final_weights_runs = fit_data(inputs_runs, runs_label)
+    print(final_weights_runs[0:10])
+
+    final_weights_wickets = fit_data(input_wickets, wickets_label)
+    print(final_weights_wickets[0:10])
+
+    # popt1,_ = curve_fit(objective, transpose(inputs_runs), runs_label,maxfev=1000000)
+    # popt2,_ = curve_fit(objective, transpose(input_wickets), wickets_label,maxfev=1000000)
 
     final_treatment_unit_runs=treatment_unit[0:30]
     final_treatment_unit_wickets=treatment_unit[30:60]
     for i in range(len(test_input_runs)):
-        final_treatment_unit_runs.append(math.floor(objective(test_input_runs[i],popt1)[0]))
-        final_treatment_unit_wickets.append(math.floor(objective(test_input_wickets[i],popt2)[0]))
+        final_treatment_unit_runs.append(math.floor(objective(test_input_runs[i],final_weights_runs)))
+        final_treatment_unit_wickets.append(math.floor(objective(test_input_wickets[i],final_weights_wickets)))
 
-    print('PREDICTED RUNS: ')
-    print(final_treatment_unit_runs[30:50])
-    print('ACTUAL RUNS:' )
-    print(treatment_unit[30:50])
-    print('PREDICTED Wickets: ')
-    print(final_treatment_unit_wickets[30:50])
-    print('ACTUAL WICKETS:' )
-    print(treatment_unit[80:100])
+    print_outputs(final_treatment_unit_runs, final_treatment_unit_wickets, treatment_unit)
 
     #TODO
     return 0
+
+
+def print_outputs(final_treatment_unit_runs, final_treatment_unit_wickets, treatment_unit):
+    print('PREDICTED RUNS: ')
+    print(final_treatment_unit_runs[30:50])
+    print('ACTUAL RUNS:')
+    print(treatment_unit[30:50])
+    print('PREDICTED Wickets: ')
+    print(final_treatment_unit_wickets[30:50])
+    print('ACTUAL WICKETS:')
+    print(treatment_unit[80:100])
+
+
+def fit_data(input_vectors, labels):
+    x = np.array(transpose(input_vectors))
+    y = np.array(labels)
+    p0 = [init_guess] * len(x)
+    output = least_squares(error_func, x0=p0, bounds=(0, 1), args=(x, y), max_nfev=n_iter)
+    final_weights = output.x
+    return final_weights
+
 
 if __name__ == '__main__':
     matches_map = clean_data(input_data)
@@ -192,10 +222,10 @@ if __name__ == '__main__':
     #Step3: Linear Regression AND Prediction
     print('-----STARTING LINEAR REGRESSION AND PREDICTION-----')
     N=len(treatment_units)
-    N=2
+    N=1
     for i  in range(N):
-        predicted_scores = predict_scores(denoised_donor_pool, treatment_units[i])
-        ####UNCOMMENT
+        predict_scores(denoised_donor_pool, treatment_units[i])
+
     print('-----LINEAR REGRESSION AND PREDICTION DONE!!-----')
 
 
