@@ -241,3 +241,42 @@ if __name__ == '__main__':
         post_process_prediction(actual_innings,predicted_innings)
 
     print('-----LINEAR REGRESSION AND PREDICTION DONE!!-----')
+    
+    
+#SAURABH SHRIVASTAVA
+'''def denoise_donor_pool(donor_pool):
+    donor_pool=np.array(donor_pool)
+    U,S,VT = svd(donor_pool)
+    #print(len(U),len(S),len(VT))
+    print("DonorPoolShaPE----",donor_pool.shape)
+    
+    #print(U.shape,S.shape,VT.shape)
+    #Done
+    Sprime=S[S>1000] #THRESHOLDING BASED ON SINGULAR VALUES>1000
+    Zeroes=np.zeros(len(S)-len(Sprime))
+    Sprime=np.append(Sprime,Zeroes)
+    #print(len(Sprime))
+    SprimeMat=np.diag(Sprime)
+    print(SprimeMat.shape)
+    zeros2=np.zeros((1400,100)) # SIGMA SHOULD BE 1500X100 HENCE NEED TO ADD 0S
+    
+    SMatNew=np.append(SprimeMat,zeros2,axis=0)
+    #print("SmatNew Shape--",SMatNew.shape)
+    #print(SMatNew)
+    temp=np.dot(U,SMatNew)
+    denoisedDonorPool=np.dot(temp,VT)
+    print("DenoisedDonorPoolShaPE----",denoisedDonorPool.shape)
+    return denoisedDonorPool
+    
+    
+def post_process_prediction(actual_innings,predicted_innings):
+    actualRunsList=np.array(actual_innings[0])
+    predictedRunsList=np.array(predicted_innings[0])
+    actualWicketsList=np.array(actual_innings[1])
+    predictedWicketsList=np.array(predicted_innings[1])
+    runsErrorSquaredList=(actualRunsList-predictedRunsList)**2
+    wicketsErrorSquaredList=(actualWicketsList-predictedWicketsList)**2
+    print(np.average(runsErrorSquaredList))
+    print(np.average(wicketsErrorSquaredList))
+    return 0
+'''
